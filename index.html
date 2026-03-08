@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patchhodl Ontario Retirement Planner</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #1a1d23;
+      --surface: #252830;
+      --border: #3d424d;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #7ba7bc;
+      --accent-hover: #8fb8ce;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1rem 1.5rem;
+      line-height: 1.4;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 0.5rem; color: var(--accent); }
+    .profile-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .profile-row label { font-size: 0.9rem; color: var(--muted); }
+    .profile-row select {
+      padding: 0.35rem 0.6rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .profile-row select:focus { outline: none; border-color: var(--accent); }
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 2rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .col-h, .col-w {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .col-head {
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .inputs label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--muted); }
+    .inputs input[type="number"] {
+      padding: 0.35rem 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .inputs input:focus { outline: none; border-color: var(--accent); }
+    .row-common {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .row-common .col-head { margin-bottom: 0; margin-right: 0.5rem; }
+    .row-common label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; flex-direction: row; }
+    .row-common label input[type="number"] { width: 5rem; }
+    .row-common .common-label { color: var(--muted); font-size: 0.9rem; }
+    .row-common input[type="radio"] { margin: 0; }
+    .row-common-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .row-common-actions .common-label { color: var(--muted); font-size: 0.9rem; }
+    .row-common-actions label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+    .row-common-actions input[type="radio"] { margin: 0; }
+    button.run {
+      padding: 0.5rem 1.25rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    button.run:hover { background: var(--accent-hover); }
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tabs button {
+      padding: 0.4rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tabs button:hover { border-color: var(--accent); color: var(--accent); }
+    .tabs button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .table-wrap { overflow-x: auto; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td { padding: 0.35rem 0.6rem; text-align: right; border-bottom: 1px solid var(--border); }
+    th { background: var(--surface); color: var(--muted); font-weight: 600; text-align: right; white-space: nowrap; }
+    td:first-child, th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+    tr:hover td { background: rgba(123, 167, 188, 0.08); }
+    .chart-wrap { width: 100%; max-width: 1600px; min-height: 320px; height: 320px; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Patchhodl Ontario Retirement Planner</h1>
+  <div class="profile-row">
+    <label for="profileSelect">Profile</label>
+    <select id="profileSelect">
+      <option value="BE">BE</option>
+      <option value="JM">JM</option>
+    </select>
+  </div>
+
+  <div class="inputs">
+    <div class="col-h">
+      <div class="col-head">Husband (H)</div>
+      <label>Desired Income After Tax <input type="number" id="incomeH" value="50000" min="0" step="1000" /></label>
+      <label>Pension <input type="number" id="pensionH" value="0" min="0" step="1000" /></label>
+      <label>RRSP <input type="number" id="rrspH" value="800000" min="0" step="10000" /></label>
+      <label>TFSA <input type="number" id="tfsaH" value="200000" min="0" step="10000" /></label>
+      <label>LIRA <input type="number" id="liraH" value="100000" min="0" step="10000" /></label>
+      <label>Retire age <input type="number" id="retireAgeH" value="50" min="50" max="71" /></label>
+    </div>
+    <div class="col-w">
+      <div class="col-head">Wife (W)</div>
+      <label>Desired Income After Tax <input type="number" id="incomeW" value="50000" min="0" step="1000" /></label>
+      <label>Pension <input type="number" id="pensionW" value="0" min="0" step="1000" /></label>
+      <label>RRSP <input type="number" id="rrspW" value="400000" min="0" step="10000" /></label>
+      <label>TFSA <input type="number" id="tfsaW" value="100000" min="0" step="10000" /></label>
+      <label>LIRA <input type="number" id="liraW" value="50000" min="0" step="10000" /></label>
+      <label>Retire age <input type="number" id="retireAgeW" value="50" min="50" max="71" /></label>
+    </div>
+    <div class="row-common">
+      <div class="col-head">Common</div>
+      <label>Portfolio Growth Rate (e.g. 0.10) <input type="number" id="growth" value="0.1" min="0" step="0.01" /></label>
+      <label>Consumer Inflation Rate (e.g. 0.05) <input type="number" id="inflation" value="0.05" min="0" step="0.01" /></label>
+      <label>Pension Rate (e.g. 0.04) <input type="number" id="pensionRate" value="0.04" min="0" step="0.01" /></label>
+      <label>CPP/OAS Rate (e.g. 0.02) <input type="number" id="cppOasRate" value="0.02" min="0" step="0.01" /></label>
+    </div>
+    <div class="row-common-actions">
+      <span class="common-label">Take CPP at</span>
+      <label><input type="radio" name="cpp" value="60" checked /> 60 (reduced)</label>
+      <label><input type="radio" name="cpp" value="65" /> 65 (full)</label>
+      <label><input type="radio" name="cpp" value="70" /> 70 (increased)</label>
+      <button class="run" id="runBtn">Run projection</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="panels"></div>
+
+  <script src="app.js"></script>
+  <script>
+    const BANDS = [
+      { id: '50-59', title: 'Age 50-59', start: 50, end: 59 },
+      { id: '60-69', title: 'Age 60-69', start: 60, end: 69 },
+      { id: '70-79', title: 'Age 70-79', start: 70, end: 79 },
+      { id: '80-89', title: 'Age 80-89', start: 80, end: 89 },
+      { id: '90-99', title: 'Age 90-99', start: 90, end: 99 }
+    ];
+
+    // Default values: BE = current defaults; JM = second profile (same structure)
+    const DEFAULT_PROFILES = {
+      BE: {
+        incomeH: 50000, incomeW: 50000, pensionH: 0, pensionW: 0,
+        rrspH: 800000, rrspW: 400000, tfsaH: 200000, tfsaW: 100000,
+        liraH: 100000, liraW: 0,
+        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02,
+        retireAgeH: 50, retireAgeW: 50, cppStartAge: 60
+      },
+      JM: {
+        incomeH: 50000, incomeW: 50000, pensionH: 90000, pensionW: 60000,
+        rrspH: 40000, rrspW: 0, tfsaH: 0, tfsaW: 0,
+        liraH: 0, liraW: 0,
+        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02,
+        retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
+      }
+    };
+
+    const STORAGE_KEY = 'patchhodl_profiles';
+
+    function getStoredProfiles() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return { ...DEFAULT_PROFILES, ...JSON.parse(raw) };
+      } catch (e) {}
+      return { ...DEFAULT_PROFILES };
+    }
+
+    function saveProfile(profileId, data) {
+      const all = getStoredProfiles();
+      all[profileId] = data;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(all)); } catch (e) {}
+    }
+
+    function getProfileData(profileId) {
+      const stored = getStoredProfiles()[profileId];
+      return { ...(stored || {}), ...DEFAULT_PROFILES[profileId] };
+    }
+
+    function getInputs() {
+      const cppRadio = document.querySelector('input[name="cpp"]:checked');
+      return {
+        incomeH: Number(document.getElementById('incomeH').value) || 0,
+        incomeW: Number(document.getElementById('incomeW').value) || 0,
+        pensionH: Number(document.getElementById('pensionH').value) || 0,
+        pensionW: Number(document.getElementById('pensionW').value) || 0,
+        rrspH: Number(document.getElementById('rrspH').value) || 0,
+        rrspW: Number(document.getElementById('rrspW').value) || 0,
+        tfsaH: Number(document.getElementById('tfsaH').value) || 0,
+        tfsaW: Number(document.getElementById('tfsaW').value) || 0,
+        liraH: Number(document.getElementById('liraH').value) || 0,
+        liraW: Number(document.getElementById('liraW').value) || 0,
+        growth: Number(document.getElementById('growth').value) || 0.05,
+        inflation: Number(document.getElementById('inflation').value) || 0.05,
+        pensionRate: (() => { const v = Number(document.getElementById('pensionRate').value); return isNaN(v) ? 0.04 : v; })(),
+        cppOasRate: (() => { const v = Number(document.getElementById('cppOasRate').value); return isNaN(v) ? 0.02 : v; })(),
+        retireAgeH: Number(document.getElementById('retireAgeH').value) || 50,
+        retireAgeW: Number(document.getElementById('retireAgeW').value) || 50,
+        cppStartAge: cppRadio ? Number(cppRadio.value) : 65
+      };
+    }
+
+    function setInputs(data) {
+      document.getElementById('incomeH').value = data.incomeH;
+      document.getElementById('incomeW').value = data.incomeW;
+      document.getElementById('pensionH').value = data.pensionH;
+      document.getElementById('pensionW').value = data.pensionW;
+      document.getElementById('rrspH').value = data.rrspH;
+      document.getElementById('rrspW').value = data.rrspW;
+      document.getElementById('tfsaH').value = data.tfsaH;
+      document.getElementById('tfsaW').value = data.tfsaW;
+      document.getElementById('liraH').value = data.liraH;
+      document.getElementById('liraW').value = data.liraW;
+      document.getElementById('growth').value = data.growth;
+      document.getElementById('inflation').value = data.inflation != null ? data.inflation : 0.05;
+      document.getElementById('pensionRate').value = data.pensionRate != null ? data.pensionRate : 0.04;
+      document.getElementById('cppOasRate').value = data.cppOasRate != null ? data.cppOasRate : 0.02;
+      document.getElementById('retireAgeH').value = data.retireAgeH;
+      document.getElementById('retireAgeW').value = data.retireAgeW;
+      const cpp = document.querySelector('input[name="cpp"][value="' + data.cppStartAge + '"]');
+      if (cpp) cpp.checked = true;
+    }
+
+    let allResults = [];
+    let chart = null;
+
+    function fmt(n) {
+      if (n == null || isNaN(n)) return '';
+      return Math.round(n).toLocaleString();
+    }
+
+    function runProjection() {
+      const inp = getInputs();
+      const startAge = Math.min(inp.retireAgeH, inp.retireAgeW);
+      allResults = runEngine({
+        rrspH: inp.rrspH, rrspW: inp.rrspW,
+        tfsaH: inp.tfsaH, tfsaW: inp.tfsaW,
+        liraH: inp.liraH, liraW: inp.liraW,
+        incomeH: inp.incomeH, incomeW: inp.incomeW,
+        pensionH: inp.pensionH, pensionW: inp.pensionW,
+        growth: inp.growth, inflation: inp.inflation, pensionRate: inp.pensionRate != null ? inp.pensionRate : 0.04, cppOasRate: inp.cppOasRate != null ? inp.cppOasRate : 0.02,
+        cppStartAge: inp.cppStartAge,
+        retireAgeH: inp.retireAgeH, retireAgeW: inp.retireAgeW,
+        endAge: 100,
+        currentAgeH: inp.retireAgeH, currentAgeW: inp.retireAgeW
+      });
+
+      const startYear = 2026;
+      const tabsEl = document.getElementById('tabs');
+      const panelsEl = document.getElementById('panels');
+      tabsEl.innerHTML = '';
+      panelsEl.innerHTML = '';
+
+      BANDS.forEach((band, idx) => {
+        const rows = allResults.filter(r => r.ageH >= band.start && r.ageH <= band.end);
+        const tabBtn = document.createElement('button');
+        tabBtn.textContent = band.title;
+        tabBtn.classList.toggle('active', idx === 0);
+        tabBtn.addEventListener('click', () => {
+          document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          tabBtn.classList.add('active');
+          document.getElementById('panel-' + band.id).classList.add('active');
+          updateChart(rows, startYear);
+        });
+        tabsEl.appendChild(tabBtn);
+
+        const panel = document.createElement('div');
+        panel.id = 'panel-' + band.id;
+        panel.className = 'panel' + (idx === 0 ? ' active' : '');
+
+        let tableHtml = '<div class="table-wrap"><table><thead><tr>' +
+          '<th>Year</th><th>Age H</th><th>Age W</th><th>RRSP (H)</th><th>RRSP (W)</th>' +
+          '<th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
+          '<th>TFSA (H)</th><th>TFSA (W)</th><th>CPP</th><th>OAS</th>' +
+          '<th>Pension (H)</th><th>Pension (W)</th><th>RRIF/LIF Min</th>' +
+          '<th>Withdrawals</th><th>Taxes</th><th>Net Income</th><th>End Bal</th></tr></thead><tbody>';
+        rows.forEach(r => {
+          const year = startYear + r.yearIndex;
+          tableHtml += `<tr>
+            <td>${year}</td><td>${r.ageH}</td><td>${r.ageW}</td>
+            <td>${fmt(r.rrspH)}</td><td>${fmt(r.rrspW)}</td>
+            <td>${fmt(r.liraH)}</td><td>${fmt(r.liraW)}</td>
+            <td>${fmt(r.lifH)}</td><td>${fmt(r.lifW)}</td>
+            <td>${fmt(r.tfsaH)}</td><td>${fmt(r.tfsaW)}</td>
+            <td>${fmt(r.cppTotal)}</td><td>${fmt(r.oasTotal)}</td>
+            <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
+            <td>${fmt(r.rrifLifMinimum)}</td>
+            <td>${fmt(r.totalWithdrawals)}</td><td>${fmt(r.taxes)}</td>
+            <td>${fmt(r.netIncome)}</td><td>${fmt(r.endingBalances)}</td>
+          </tr>`;
+        });
+        tableHtml += '</tbody></table></div>';
+        panel.innerHTML = tableHtml + '<div class="chart-wrap"><canvas id="chart-' + band.id + '"></canvas></div>';
+        panelsEl.appendChild(panel);
+      });
+
+      const firstRows = allResults.filter(r => r.ageH >= BANDS[0].start && r.ageH <= BANDS[0].end);
+      setTimeout(() => updateChart(firstRows, startYear), 0);
+    }
+
+    function updateChart(rows, startYear) {
+      const activePanel = document.querySelector('.panel.active');
+      if (!activePanel) return;
+      const canvasEl = activePanel.querySelector('canvas');
+      const chartWrap = activePanel.querySelector('.chart-wrap');
+      if (!canvasEl || !chartWrap) return;
+      const minBarWidth = 48;
+      chartWrap.style.minWidth = Math.max(900, rows.length * minBarWidth) + 'px';
+
+      const ctx = canvasEl.getContext('2d');
+      const labels = rows.map(r => startYear + r.yearIndex);
+      const stacked = [
+        rows.map(r => r.rrspH),
+        rows.map(r => r.rrspW),
+        rows.map(r => r.liraH),
+        rows.map(r => r.liraW),
+        rows.map(r => r.lifH),
+        rows.map(r => r.lifW),
+        rows.map(r => r.tfsaH),
+        rows.map(r => r.tfsaW),
+        rows.map(r => r.pensionH),
+        rows.map(r => r.pensionW)
+      ];
+      const colors = ['#1a3a5c','#0e7bb5','#1a4d1a','#4a9c4a','#b85c00','#e6a800','#5a3a7a','#c71585','#006666','#7fcaca'];
+      const names = ['RRSP (H)','RRSP (W)','LIRA (H)','LIRA (W)','LIF (H)','LIF (W)','TFSA (H)','TFSA (W)','Pension (H)','Pension (W)'];
+      let maxVal = 0;
+      for (let i = 0; i < (labels.length || 0); i++) {
+        let s = 0;
+        stacked.forEach(d => { s += (d[i] || 0); });
+        if (s > maxVal) maxVal = s;
+      }
+      const yMax = Math.max(250000, Math.ceil((maxVal + 250000) / 250000) * 250000);
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: stacked.map((data, i) => ({
+            label: names[i],
+            data,
+            backgroundColor: colors[i],
+            borderWidth: 0
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          datasets: {
+            bar: {
+              categoryPercentage: 1,
+              barPercentage: 1
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: {
+              stacked: true,
+              min: 0,
+              max: yMax,
+              ticks: { stepSize: 250000, callback: v => Number(v).toLocaleString() }
+            }
+          },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  const pts = context.tooltip && context.tooltip.dataPoints;
+                  if (!pts || !pts.length || pts[0].dataIndex == null) return '';
+                  const row = rows[pts[0].dataIndex];
+                  return 'Year ' + (startYear + row.yearIndex) + ' (Age H: ' + row.ageH + ', W: ' + row.ageW + ')';
+                },
+                afterBody: function(context) {
+                  const pts = context.tooltip && context.tooltip.dataPoints;
+                  if (!pts || !pts.length || pts[0].dataIndex == null) return [];
+                  const row = rows[pts[0].dataIndex];
+                  return [
+                    'RRSP (H): ' + fmt(row.rrspH),
+                    'RRSP (W): ' + fmt(row.rrspW),
+                    'LIRA (H): ' + fmt(row.liraH),
+                    'LIRA (W): ' + fmt(row.liraW),
+                    'LIF (H): ' + fmt(row.lifH),
+                    'LIF (W): ' + fmt(row.lifW),
+                    'TFSA (H): ' + fmt(row.tfsaH),
+                    'TFSA (W): ' + fmt(row.tfsaW),
+                    'Pension (H): ' + fmt(row.pensionH),
+                    'Pension (W): ' + fmt(row.pensionW),
+                    'CPP total: ' + fmt(row.cppTotal),
+                    'OAS total: ' + fmt(row.oasTotal),
+                    'Total withdrawals: ' + fmt(row.totalWithdrawals),
+                    'Taxes: ' + fmt(row.taxes),
+                    'Net income: ' + fmt(row.netIncome),
+                    'Ending balances: ' + fmt(row.endingBalances)
+                  ];
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    document.getElementById('runBtn').addEventListener('click', () => {
+      const profileId = document.getElementById('profileSelect').value;
+      saveProfile(profileId, getInputs());
+      runProjection();
+    });
+
+    document.getElementById('profileSelect').addEventListener('change', function() {
+      const prevId = this.getAttribute('data-prev') || 'BE';
+      saveProfile(prevId, getInputs());
+      this.setAttribute('data-prev', this.value);
+      setInputs(getProfileData(this.value));
+      runProjection();
+    });
+
+    (function init() {
+      const profileSelect = document.getElementById('profileSelect');
+      const profileId = profileSelect.value;
+      setInputs(getProfileData(profileId));
+      profileSelect.setAttribute('data-prev', profileId);
+      runProjection();
+    })();
+  </script>
+</body>
+</html>
