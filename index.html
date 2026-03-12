@@ -221,6 +221,7 @@
     <select id="profileSelect">
       <option value="BE">BE</option>
       <option value="JM">JM</option>
+      <option value="EG">EG</option>
     </select>
   </div>
 
@@ -267,6 +268,9 @@
 
   <script src="app.js"></script>
   <script>
+    // Set this to your deployed Worker URL after: cd worker && npx wrangler deploy
+    const WORKER_LOG_URL = 'https://retire-logger.patchhodl.workers.dev/log';
+
     const BANDS = [
       { id: '50-59', title: 'Age 50-59', start: 50, end: 59 },
       { id: '60-69', title: 'Age 60-69', start: 60, end: 69 },
@@ -287,6 +291,13 @@
       JM: {
         incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 90000, pensionW: 60000,
         rrspH: 40000, rrspW: 0, tfsaH: 0, tfsaW: 0,
+        liraH: 0, liraW: 0,
+        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02, bankRate: 0.0025,
+        retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
+      },
+      EG: {
+        incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 60000, pensionW: 60000,
+        rrspH: 200000, rrspW: 200000, tfsaH: 100000, tfsaW: 100000,
         liraH: 0, liraW: 0,
         growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02, bankRate: 0.0025,
         retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
@@ -568,7 +579,17 @@
 
     document.getElementById('runBtn').addEventListener('click', () => {
       const profileId = document.getElementById('profileSelect').value;
-      saveProfile(profileId, getInputs());
+      const inputs = getInputs();
+      saveProfile(profileId, inputs);
+      const payload = { profile: profileId, ...inputs };
+      console.log('Run projection', payload);
+      if (WORKER_LOG_URL && !WORKER_LOG_URL.includes('YOUR_SUBDOMAIN')) {
+        fetch(WORKER_LOG_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('Log backend failed', err));
+      }
       runProjection();
     });
 
