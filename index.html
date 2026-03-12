@@ -228,6 +228,7 @@
     <div class="col-h">
       <div class="col-head">Husband (H)</div>
       <label>Desired Income After Tax <input type="number" id="incomeH" value="50000" min="0" step="1000" /></label>
+      <label>Bank <input type="number" id="bankH" value="0" min="0" step="1000" /></label>
       <label>Pension <input type="number" id="pensionH" value="0" min="0" step="1000" /></label>
       <label>RRSP <input type="number" id="rrspH" value="800000" min="0" step="10000" /></label>
       <label>TFSA <input type="number" id="tfsaH" value="200000" min="0" step="10000" /></label>
@@ -237,6 +238,7 @@
     <div class="col-w">
       <div class="col-head">Wife (W)</div>
       <label>Desired Income After Tax <input type="number" id="incomeW" value="50000" min="0" step="1000" /></label>
+      <label>Bank <input type="number" id="bankW" value="0" min="0" step="1000" /></label>
       <label>Pension <input type="number" id="pensionW" value="0" min="0" step="1000" /></label>
       <label>RRSP <input type="number" id="rrspW" value="400000" min="0" step="10000" /></label>
       <label>TFSA <input type="number" id="tfsaW" value="100000" min="0" step="10000" /></label>
@@ -245,9 +247,10 @@
     </div>
     <div class="row-common">
       <div class="col-head">Common</div>
+      <label>Bank Rate (e.g. 0.0025) <input type="number" id="bankRate" value="0.0025" min="0" step="0.0001" /></label>
+      <label>Pension Rate (e.g. 0.04) <input type="number" id="pensionRate" value="0.04" min="0" step="0.01" /></label>
       <label>Portfolio Growth Rate (e.g. 0.10) <input type="number" id="growth" value="0.1" min="0" step="0.01" /></label>
       <label>Consumer Inflation Rate (e.g. 0.05) <input type="number" id="inflation" value="0.05" min="0" step="0.01" /></label>
-      <label>Pension Rate (e.g. 0.04) <input type="number" id="pensionRate" value="0.04" min="0" step="0.01" /></label>
       <label>CPP/OAS Rate (e.g. 0.02) <input type="number" id="cppOasRate" value="0.02" min="0" step="0.01" /></label>
     </div>
     <div class="row-common-actions">
@@ -275,17 +278,17 @@
     // Default values: BE = current defaults; JM = second profile (same structure)
     const DEFAULT_PROFILES = {
       BE: {
-        incomeH: 50000, incomeW: 50000, pensionH: 0, pensionW: 0,
+        incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 0, pensionW: 0,
         rrspH: 400000, rrspW: 400000, tfsaH: 200000, tfsaW: 100000,
         liraH: 100000, liraW: 0,
-        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02,
-        retireAgeH: 50, retireAgeW: 50, cppStartAge: 60
+        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02, bankRate: 0.0025,
+        retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
       },
       JM: {
-        incomeH: 50000, incomeW: 50000, pensionH: 90000, pensionW: 60000,
+        incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 90000, pensionW: 60000,
         rrspH: 40000, rrspW: 0, tfsaH: 0, tfsaW: 0,
         liraH: 0, liraW: 0,
-        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02,
+        growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02, bankRate: 0.0025,
         retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
       }
     };
@@ -316,6 +319,8 @@
       return {
         incomeH: Number(document.getElementById('incomeH').value) || 0,
         incomeW: Number(document.getElementById('incomeW').value) || 0,
+        bankH: Number(document.getElementById('bankH').value) || 0,
+        bankW: Number(document.getElementById('bankW').value) || 0,
         pensionH: Number(document.getElementById('pensionH').value) || 0,
         pensionW: Number(document.getElementById('pensionW').value) || 0,
         rrspH: Number(document.getElementById('rrspH').value) || 0,
@@ -328,6 +333,7 @@
         inflation: Number(document.getElementById('inflation').value) || 0.05,
         pensionRate: (() => { const v = Number(document.getElementById('pensionRate').value); return isNaN(v) ? 0.04 : v; })(),
         cppOasRate: (() => { const v = Number(document.getElementById('cppOasRate').value); return isNaN(v) ? 0.02 : v; })(),
+        bankRate: (() => { const v = Number(document.getElementById('bankRate').value); return isNaN(v) ? 0.0025 : v; })(),
         retireAgeH: Number(document.getElementById('retireAgeH').value) || 50,
         retireAgeW: Number(document.getElementById('retireAgeW').value) || 50,
         cppStartAge: cppRadio ? Number(cppRadio.value) : 65
@@ -337,6 +343,8 @@
     function setInputs(data) {
       document.getElementById('incomeH').value = data.incomeH;
       document.getElementById('incomeW').value = data.incomeW;
+      document.getElementById('bankH').value = data.bankH != null ? data.bankH : 0;
+      document.getElementById('bankW').value = data.bankW != null ? data.bankW : 0;
       document.getElementById('pensionH').value = data.pensionH;
       document.getElementById('pensionW').value = data.pensionW;
       document.getElementById('rrspH').value = data.rrspH;
@@ -349,6 +357,7 @@
       document.getElementById('inflation').value = data.inflation != null ? data.inflation : 0.05;
       document.getElementById('pensionRate').value = data.pensionRate != null ? data.pensionRate : 0.04;
       document.getElementById('cppOasRate').value = data.cppOasRate != null ? data.cppOasRate : 0.02;
+      document.getElementById('bankRate').value = data.bankRate != null ? data.bankRate : 0.0025;
       document.getElementById('retireAgeH').value = data.retireAgeH;
       document.getElementById('retireAgeW').value = data.retireAgeW;
       const cpp = document.querySelector('input[name="cpp"][value="' + data.cppStartAge + '"]');
@@ -371,8 +380,9 @@
         tfsaH: inp.tfsaH, tfsaW: inp.tfsaW,
         liraH: inp.liraH, liraW: inp.liraW,
         incomeH: inp.incomeH, incomeW: inp.incomeW,
+        bankH: inp.bankH != null ? inp.bankH : 0, bankW: inp.bankW != null ? inp.bankW : 0,
         pensionH: inp.pensionH, pensionW: inp.pensionW,
-        growth: inp.growth, inflation: inp.inflation, pensionRate: inp.pensionRate != null ? inp.pensionRate : 0.04, cppOasRate: inp.cppOasRate != null ? inp.cppOasRate : 0.02,
+        growth: inp.growth, inflation: inp.inflation, pensionRate: inp.pensionRate != null ? inp.pensionRate : 0.04, cppOasRate: inp.cppOasRate != null ? inp.cppOasRate : 0.02, bankRate: inp.bankRate != null ? inp.bankRate : 0.0025,
         cppStartAge: inp.cppStartAge,
         retireAgeH: inp.retireAgeH, retireAgeW: inp.retireAgeW,
         endAge: 100,
@@ -404,21 +414,23 @@
         panel.className = 'panel' + (idx === 0 ? ' active' : '');
 
         let tableHtml = '<div class="table-wrap"><table><thead><tr>' +
-          '<th>Year</th><th>Age H</th><th>Age W</th><th>RRSP (H)</th><th>RRSP (W)</th>' +
-          '<th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
+          '<th>Year</th><th>Age H</th><th>Age W</th><th>Bank (H)</th><th>Bank (W)</th>' +
+          '<th>Pension (H)</th><th>Pension (W)</th>' +
+          '<th>RRSP (H)</th><th>RRSP (W)</th><th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
           '<th>TFSA (H)</th><th>TFSA (W)</th><th>CPP</th><th>OAS</th>' +
-          '<th>Pension (H)</th><th>Pension (W)</th><th>RRIF/LIF Min</th>' +
+          '<th>RRIF/LIF Min</th>' +
           '<th>Withdrawals</th><th>Taxes</th><th>Net Income</th><th>End Bal</th></tr></thead><tbody>';
         rows.forEach(r => {
           const year = startYear + r.yearIndex;
           tableHtml += `<tr>
             <td>${year}</td><td>${r.ageH}</td><td>${r.ageW}</td>
+            <td>${fmt(r.bankH)}</td><td>${fmt(r.bankW)}</td>
+            <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
             <td>${fmt(r.rrspH)}</td><td>${fmt(r.rrspW)}</td>
             <td>${fmt(r.liraH)}</td><td>${fmt(r.liraW)}</td>
             <td>${fmt(r.lifH)}</td><td>${fmt(r.lifW)}</td>
             <td>${fmt(r.tfsaH)}</td><td>${fmt(r.tfsaW)}</td>
             <td>${fmt(r.cppTotal)}</td><td>${fmt(r.oasTotal)}</td>
-            <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
             <td>${fmt(r.rrifLifMinimum)}</td>
             <td>${fmt(r.totalWithdrawals)}</td><td>${fmt(r.taxes)}</td>
             <td>${fmt(r.netIncome)}</td><td>${fmt(r.endingBalances)}</td>
@@ -456,6 +468,10 @@
       const ctx = canvasEl.getContext('2d');
       const labels = rows.map(r => startYear + r.yearIndex);
       const stacked = [
+        rows.map(r => r.bankH),
+        rows.map(r => r.bankW),
+        rows.map(r => r.pensionH),
+        rows.map(r => r.pensionW),
         rows.map(r => r.rrspH),
         rows.map(r => r.rrspW),
         rows.map(r => r.liraH),
@@ -463,12 +479,10 @@
         rows.map(r => r.lifH),
         rows.map(r => r.lifW),
         rows.map(r => r.tfsaH),
-        rows.map(r => r.tfsaW),
-        rows.map(r => r.pensionH),
-        rows.map(r => r.pensionW)
+        rows.map(r => r.tfsaW)
       ];
-      const colors = ['#1a3a5c','#0e7bb5','#1a4d1a','#4a9c4a','#b85c00','#e6a800','#5a3a7a','#c71585','#006666','#7fcaca'];
-      const names = ['RRSP (H)','RRSP (W)','LIRA (H)','LIRA (W)','LIF (H)','LIF (W)','TFSA (H)','TFSA (W)','Pension (H)','Pension (W)'];
+      const colors = ['#2c5282','#63b3ed','#006666','#7fcaca','#1a3a5c','#0e7bb5','#1a4d1a','#4a9c4a','#b85c00','#e6a800','#5a3a7a','#c71585'];
+      const names = ['Bank (H)','Bank (W)','Pension (H)','Pension (W)','RRSP (H)','RRSP (W)','LIRA (H)','LIRA (W)','LIF (H)','LIF (W)','TFSA (H)','TFSA (W)'];
       let maxVal = 0;
       for (let i = 0; i < (labels.length || 0); i++) {
         let s = 0;
@@ -522,6 +536,10 @@
                   if (!pts || !pts.length || pts[0].dataIndex == null) return [];
                   const row = rows[pts[0].dataIndex];
                   return [
+                    'Bank (H): ' + fmt(row.bankH),
+                    'Bank (W): ' + fmt(row.bankW),
+                    'Pension (H): ' + fmt(row.pensionH),
+                    'Pension (W): ' + fmt(row.pensionW),
                     'RRSP (H): ' + fmt(row.rrspH),
                     'RRSP (W): ' + fmt(row.rrspW),
                     'LIRA (H): ' + fmt(row.liraH),
@@ -530,8 +548,6 @@
                     'LIF (W): ' + fmt(row.lifW),
                     'TFSA (H): ' + fmt(row.tfsaH),
                     'TFSA (W): ' + fmt(row.tfsaW),
-                    'Pension (H): ' + fmt(row.pensionH),
-                    'Pension (W): ' + fmt(row.pensionW),
                     'CPP total: ' + fmt(row.cppTotal),
                     'OAS total: ' + fmt(row.oasTotal),
                     'Total withdrawals: ' + fmt(row.totalWithdrawals),

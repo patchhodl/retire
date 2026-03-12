@@ -113,14 +113,15 @@ function computeTaxAndNetFromWithdrawal(ageH, ageW, cppTotal, oasTotal, pensionT
 function runEngine(params) {
   const {
     rrspH, rrspW, tfsaH, tfsaW, liraH, liraW,
-    incomeH, incomeW, pensionH, pensionW,
-    growth, inflation, pensionRate = 0.04, cppOasRate = 0.02, cppStartAge, retireAgeH, retireAgeW, endAge,
+    incomeH, incomeW, bankH, bankW, pensionH, pensionW,
+    growth, inflation, pensionRate = 0.04, cppOasRate = 0.02, bankRate = 0.0025, cppStartAge, retireAgeH, retireAgeW, endAge,
     currentAgeH, currentAgeW
   } = params;
 
   const results = [];
   let rH = rrspH, rW = rrspW, tH = tfsaH, tW = tfsaW;
   let lH = liraH, lW = liraW, fH = 0, fW = 0; // LIF
+  let bH = bankH || 0, bW = bankW || 0;
 
   const years = endAge - Math.min(currentAgeH, currentAgeW);
   const cppAge = [60, 65, 70].includes(cppStartAge) ? cppStartAge : 65;
@@ -132,7 +133,9 @@ function runEngine(params) {
 
     if (ageH < retireAgeH && ageW < retireAgeW) {
       const g = 1 + growth;
+      const bankG = 1 + bankRate;
       rH *= g; rW *= g; tH *= g; tW *= g; lH *= g; fH *= g; lW *= g; fW *= g;
+      bH *= bankG; bW *= bankG;
       continue;
     }
 
@@ -222,16 +225,19 @@ function runEngine(params) {
 
     const totalWithdrawals = taxableWithdrawals + tfsaWithdrawals + cppTotal + oasTotal + pensionTotal;
     const g = 1 + growth;
+    const bankG = 1 + bankRate;
     rH *= g; rW *= g; tH *= g; tW *= g; lH *= g; fH *= g; lW *= g; fW *= g;
+    bH *= bankG; bW *= bankG;
 
     results.push({
       yearIndex, ageH, ageW,
       rrspH: rH, rrspW: rW, liraH: lH, liraW: lW, lifH: fH, lifW: fW, tfsaH: tH, tfsaW: tW,
+      bankH: bH, bankW: bW,
       cppTotal, oasTotal, pensionH: pH, pensionW: pW, pensionTotal,
       rrifLifMinimum: rrifLifMin,
       totalWithdrawals, taxes,
       netIncome: Math.min(netNeed, netFromTaxablePlusPensions + tfsaWithdrawals),
-      endingBalances: rH + rW + tH + tW + lH + lW + fH + fW
+      endingBalances: rH + rW + tH + tW + lH + lW + fH + fW + bH + bW
     });
   }
   return results;
