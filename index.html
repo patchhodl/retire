@@ -156,6 +156,32 @@
     .chart-scroll { overflow-x: auto; overflow-y: hidden; max-width: 100%; margin-top: 1rem; -webkit-overflow-scrolling: touch; }
     .chart-wrap { width: 100%; max-width: 100%; min-height: 420px; height: 420px; }
 
+    /* Narrow viewport: table + chart same width as viewport (phones + tablets, incl. landscape) */
+    @media (max-width: 1024px) {
+      body { overflow-x: hidden; }
+      .table-wrap {
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        box-sizing: border-box;
+      }
+      .chart-scroll {
+        width: 100vw;
+        max-width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+      }
+      .chart-wrap {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+      }
+    }
+
     @media (max-width: 768px) {
       body { padding: 0.75rem; }
       .inputs {
@@ -184,8 +210,7 @@
       button.run { padding: 0.6rem 1.25rem; min-height: 48px; }
       .tabs button { padding: 0.5rem 0.75rem; min-height: 44px; }
       .table-wrap { margin-left: -0.75rem; margin-right: -0.75rem; max-width: 100vw; }
-      .chart-scroll { margin-left: -0.75rem; margin-right: -0.75rem; -webkit-overflow-scrolling: touch; overflow-x: hidden; }
-      .chart-wrap { min-height: 380px; height: 380px; max-width: 100%; min-width: 100%; width: 100%; }
+      .chart-wrap { min-height: 380px; height: 380px; }
     }
   </style>
 </head>
@@ -415,15 +440,17 @@
       const chartWrap = activePanel.querySelector('.chart-wrap');
       const chartScroll = activePanel.querySelector('.chart-scroll');
       if (!canvasEl || !chartWrap) return;
-      const isNarrow = window.innerWidth <= 768;
+      const isNarrow = window.innerWidth <= 1024;
       if (isNarrow) {
         chartWrap.style.minWidth = '100%';
         chartWrap.style.width = '100%';
+        chartWrap.style.maxWidth = '100%';
       } else {
         const minBarWidth = 48;
         const minChartWidth = Math.max(chartScroll ? chartScroll.clientWidth : 300, rows.length * minBarWidth);
         chartWrap.style.minWidth = minChartWidth + 'px';
         chartWrap.style.width = '';
+        chartWrap.style.maxWidth = '';
       }
 
       const ctx = canvasEl.getContext('2d');
@@ -518,6 +545,9 @@
           }
         }
       });
+      if (window.innerWidth <= 1024 && chart) {
+        requestAnimationFrame(function() { chart.resize(); });
+      }
     }
 
     document.getElementById('runBtn').addEventListener('click', () => {
