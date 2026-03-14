@@ -139,10 +139,6 @@ function runEngine(params) {
       continue;
     }
 
-    const needH = incomeH * Math.pow(1 + inflation, yearIndex);
-    const needW = incomeW * Math.pow(1 + inflation, yearIndex);
-    const netNeed = needH + needW;
-
     const cppOasGrowth = Math.pow(1 + cppOasRate, yearIndex);
     const cppH = ageH >= cppAge ? MaxCppMonthlyAt65 * 12 * cppFactor * cppOasGrowth : 0;
     const cppW = ageW >= cppAge ? MaxCppMonthlyAt65 * 12 * cppFactor * cppOasGrowth : 0;
@@ -151,6 +147,17 @@ function runEngine(params) {
     const pH = pensionH * Math.pow(1 + pensionRate, yearIndex);
     const pW = pensionW * Math.pow(1 + pensionRate, yearIndex);
     const cppTotal = cppH + cppW, oasTotal = oasH + oasW, pensionTotal = pH + pW;
+
+    // Desired income is before tax; convert to after-tax need (50/50 split, with OAS clawback)
+    const grossTotal = (incomeH + incomeW) * Math.pow(1 + inflation, yearIndex);
+    const grossPerPerson = grossTotal / 2;
+    const taxH = TaxCalculator.computeTotalTax(grossPerPerson, ageH);
+    const taxW = TaxCalculator.computeTotalTax(grossPerPerson, ageW);
+    const clawH = TaxCalculator.computeOasClawback(grossPerPerson, oasTotal / 2);
+    const clawW = TaxCalculator.computeOasClawback(grossPerPerson, oasTotal / 2);
+    const needH = grossPerPerson - taxH - clawH;
+    const needW = grossPerPerson - taxW - clawW;
+    const netNeed = needH + needW;
 
     if (ageH >= 55 && lH > 0) { fH += lH; lH = 0; }
     if (ageW >= 55 && lW > 0) { fW += lW; lW = 0; }
@@ -215,7 +222,7 @@ function runEngine(params) {
       }
     }
 
-    // If pension (and other income) exceeds desired income after tax, contribute surplus to TFSA
+    // Desired income is before tax; net need is derived from gross minus tax. Surplus net over need goes to TFSA.
     const familyTaxableIncome = cppTotal + oasTotal + pensionTotal + taxableWithdrawals;
     const netTotal = familyTaxableIncome - taxes;
     const hNet = netTotal / 2;

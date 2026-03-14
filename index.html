@@ -239,9 +239,9 @@
   <div class="inputs">
     <div class="col-h">
       <div class="col-head">Husband (H)</div>
-      <label>Desired Income After Tax <input type="number" id="incomeH" value="50000" min="0" step="1000" /></label>
+      <label>Desired Income (before tax) <input type="number" id="incomeH" value="50000" min="0" step="1000" /></label>
+      <label>Pension Income <input type="number" id="pensionH" value="0" min="0" step="1000" /></label>
       <label>Bank <input type="number" id="bankH" value="0" min="0" step="1000" /></label>
-      <label>Pension <input type="number" id="pensionH" value="0" min="0" step="1000" /></label>
       <label>RRSP <input type="number" id="rrspH" value="800000" min="0" step="10000" /></label>
       <label>TFSA <input type="number" id="tfsaH" value="200000" min="0" step="10000" /></label>
       <label>LIRA <input type="number" id="liraH" value="100000" min="0" step="10000" /></label>
@@ -249,9 +249,9 @@
     </div>
     <div class="col-w">
       <div class="col-head">Wife (W)</div>
-      <label>Desired Income After Tax <input type="number" id="incomeW" value="50000" min="0" step="1000" /></label>
+      <label>Desired Income (before tax) <input type="number" id="incomeW" value="50000" min="0" step="1000" /></label>
+      <label>Pension Income <input type="number" id="pensionW" value="0" min="0" step="1000" /></label>
       <label>Bank <input type="number" id="bankW" value="0" min="0" step="1000" /></label>
-      <label>Pension <input type="number" id="pensionW" value="0" min="0" step="1000" /></label>
       <label>RRSP <input type="number" id="rrspW" value="400000" min="0" step="10000" /></label>
       <label>TFSA <input type="number" id="tfsaW" value="100000" min="0" step="10000" /></label>
       <label>LIRA <input type="number" id="liraW" value="50000" min="0" step="10000" /></label>
@@ -274,7 +274,8 @@
     </div>
     <div class="row-explanation">
       <div class="col-head">Explanation</div>
-      <p><strong>Assumption:</strong> If your Pension is greater than your Desired Income After Tax, any difference will be contributed to your TFSA.</p>
+      <p><strong>Assumption:</strong> If your Pension Income is greater than your Desired Income (before tax), any difference (after tax) will be contributed to your TFSA.</p>
+      <p><strong>Desired Income:</strong> Your before-tax target life style.  The planner converts it to an after-tax need using current Canadian tax rules.</p>
       <p><strong>Bank Rate:</strong> The rate that banks provide for savings accounts.</p>
       <p><strong>Pension Rate:</strong> The inflation-adjusted rate that pensions (ex OMERS) will increase at.</p>
       <p><strong>CPP/OAS Rate:</strong> The inflation-adjusted rate that the Canadian government will increase CPP and OAS at each year.</p>
@@ -445,24 +446,23 @@
         panel.className = 'panel' + (idx === 0 ? ' active' : '');
 
         let tableHtml = '<div class="table-wrap"><table><thead><tr>' +
-          '<th>Year</th><th>Age H</th><th>Age W</th><th>Bank (H)</th><th>Bank (W)</th>' +
-          '<th>Pension (H)</th><th>Pension (W)</th>' +
+          '<th>Year</th><th>Age (H)</th><th>Age (W)</th><th>Bank (H)</th><th>Bank (W)</th>' +
           '<th>RRSP (H)</th><th>RRSP (W)</th><th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
           '<th>TFSA (H)</th><th>TFSA (W)</th><th>CPP</th><th>OAS</th>' +
-          '<th>RRIF/LIF Min</th>' +
+          '<th>RRIF/LIF Min</th><th>Pension Income (H)</th><th>Pension Income (W)</th>' +
           '<th>Withdrawals</th><th>Taxes</th><th>Net Income</th><th>End Bal</th></tr></thead><tbody>';
         rows.forEach(r => {
           const year = startYear + r.yearIndex;
           tableHtml += `<tr>
             <td>${year}</td><td>${r.ageH}</td><td>${r.ageW}</td>
             <td>${fmt(r.bankH)}</td><td>${fmt(r.bankW)}</td>
-            <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
             <td>${fmt(r.rrspH)}</td><td>${fmt(r.rrspW)}</td>
             <td>${fmt(r.liraH)}</td><td>${fmt(r.liraW)}</td>
             <td>${fmt(r.lifH)}</td><td>${fmt(r.lifW)}</td>
             <td>${fmt(r.tfsaH)}</td><td>${fmt(r.tfsaW)}</td>
             <td>${fmt(r.cppTotal)}</td><td>${fmt(r.oasTotal)}</td>
             <td>${fmt(r.rrifLifMinimum)}</td>
+            <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
             <td>${fmt(r.totalWithdrawals)}</td><td>${fmt(r.taxes)}</td>
             <td>${fmt(r.netIncome)}</td><td>${fmt(r.endingBalances)}</td>
           </tr>`;
@@ -513,7 +513,7 @@
         rows.map(r => r.tfsaW)
       ];
       const colors = ['#2c5282','#63b3ed','#006666','#7fcaca','#1a3a5c','#0e7bb5','#1a4d1a','#4a9c4a','#b85c00','#e6a800','#5a3a7a','#c71585'];
-      const names = ['Bank (H)','Bank (W)','Pension (H)','Pension (W)','RRSP (H)','RRSP (W)','LIRA (H)','LIRA (W)','LIF (H)','LIF (W)','TFSA (H)','TFSA (W)'];
+      const names = ['Bank (H)','Bank (W)','Pension Income (H)','Pension Income (W)','RRSP (H)','RRSP (W)','LIRA (H)','LIRA (W)','LIF (H)','LIF (W)','TFSA (H)','TFSA (W)'];
       let maxVal = 0;
       for (let i = 0; i < (labels.length || 0); i++) {
         let s = 0;
@@ -569,8 +569,8 @@
                   return [
                     'Bank (H): ' + fmt(row.bankH),
                     'Bank (W): ' + fmt(row.bankW),
-                    'Pension (H): ' + fmt(row.pensionH),
-                    'Pension (W): ' + fmt(row.pensionW),
+                    'Pension Income (H): ' + fmt(row.pensionH),
+                    'Pension Income (W): ' + fmt(row.pensionW),
                     'RRSP (H): ' + fmt(row.rrspH),
                     'RRSP (W): ' + fmt(row.rrspW),
                     'LIRA (H): ' + fmt(row.liraH),
