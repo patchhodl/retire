@@ -104,25 +104,36 @@
     .row-common-actions .common-label { color: var(--muted); font-size: 0.9rem; }
     .row-common-actions label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
     .row-common-actions input[type="radio"] { margin: 0; }
+    .row-explanation {
+      grid-column: 1 / -1;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .row-explanation .col-head { margin-bottom: 0.35rem; }
+    .row-explanation p { margin: 0.25rem 0; line-height: 1.45; }
+    .row-explanation strong { color: var(--text); }
     button.run {
       padding: 0.5rem 1.25rem;
-      background: #c0392b;
+      background: #27ae60;
       color: #fff;
       border: none;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       font-size: 0.95rem;
-      box-shadow: 0 3px 0 #922b21, 0 4px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 0 #1e8449, 0 4px 8px rgba(0,0,0,0.3);
       transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
-    button.run:hover { background: #e74c3c; }
+    button.run:hover { background: #2ecc71; }
     button.run:active {
-      background: #27ae60;
+      background: #1e8449;
       transform: translateY(2px);
-      box-shadow: 0 1px 0 #1e8449, 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 0 #146b36, 0 2px 4px rgba(0,0,0,0.3);
     }
     .tabs {
       display: flex;
@@ -248,11 +259,11 @@
     </div>
     <div class="row-common">
       <div class="col-head">Common</div>
-      <label>Bank Rate (e.g. 0.0025) <input type="number" id="bankRate" value="0.0025" min="0" step="0.0001" /></label>
-      <label>Pension Rate (e.g. 0.04) <input type="number" id="pensionRate" value="0.04" min="0" step="0.01" /></label>
-      <label>Portfolio Growth Rate (e.g. 0.10) <input type="number" id="growth" value="0.1" min="0" step="0.01" /></label>
-      <label>Consumer Inflation Rate (e.g. 0.05) <input type="number" id="inflation" value="0.05" min="0" step="0.01" /></label>
-      <label>CPP/OAS Rate (e.g. 0.02) <input type="number" id="cppOasRate" value="0.02" min="0" step="0.01" /></label>
+      <label>Bank Rate <input type="number" id="bankRate" value="0.0025" min="0" step="0.0001" /></label>
+      <label>Pension Rate <input type="number" id="pensionRate" value="0.04" min="0" step="0.01" /></label>
+      <label>CPP/OAS Rate <input type="number" id="cppOasRate" value="0.02" min="0" step="0.01" /></label>
+      <label>Portfolio Growth Rate <input type="number" id="growth" value="0.1" min="0" step="0.01" /></label>
+      <label>Consumer Inflation Rate <input type="number" id="inflation" value="0.05" min="0" step="0.01" /></label>
     </div>
     <div class="row-common-actions">
       <span class="common-label">Take CPP at</span>
@@ -260,6 +271,15 @@
       <label><input type="radio" name="cpp" value="65" /> 65 (full)</label>
       <label><input type="radio" name="cpp" value="70" /> 70 (increased)</label>
       <button class="run" id="runBtn">Run projection</button>
+    </div>
+    <div class="row-explanation">
+      <div class="col-head">Explanation</div>
+      <p><strong>Assumption:</strong> If your Pension is greater than your Desired Income After Tax, any difference will be contributed to your TFSA.</p>
+      <p><strong>Bank Rate:</strong> The rate that banks provide for savings accounts.</p>
+      <p><strong>Pension Rate:</strong> The inflation-adjusted rate that pensions (ex OMERS) will increase at.</p>
+      <p><strong>CPP/OAS Rate:</strong> The inflation-adjusted rate that the Canadian government will increase CPP and OAS at each year.</p>
+      <p><strong>Portfolio Growth Rate:</strong> This is the assumed growth rate for the RRSP, TFSA and LIRA.</p>
+      <p><strong>Consumer Inflation Rate:</strong> Assume you need $100,000 this year and the CIR is 0.05 / 5%; the following year you will need $105,000 to have the same standard of living.</p>
     </div>
   </div>
 
@@ -289,8 +309,8 @@
         retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
       },
       JM: {
-        incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 90000, pensionW: 60000,
-        rrspH: 40000, rrspW: 0, tfsaH: 0, tfsaW: 0,
+        incomeH: 50000, incomeW: 50000, bankH: 0, bankW: 0, pensionH: 100000, pensionW: 60000,
+        rrspH: 50000, rrspW: 0, tfsaH: 0, tfsaW: 0,
         liraH: 0, liraW: 0,
         growth: 0.1, inflation: 0.05, pensionRate: 0.04, cppOasRate: 0.02, bankRate: 0.0025,
         retireAgeH: 50, retireAgeW: 50, cppStartAge: 65
