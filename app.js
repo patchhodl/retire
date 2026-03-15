@@ -71,6 +71,24 @@ function rrifFactor(age) {
   return 1 / (90 - capped);
 }
 
+// Find total gross taxable income T such that T - totalTax(T) = netNeed (50/50 split, with OAS clawback).
+function desiredTotalGrossFromNetNeed(netNeed, ageH, ageW, oasTotal) {
+  if (netNeed <= 0) return 0;
+  let low = netNeed, high = Math.max(netNeed * 2, 500000);
+  for (let i = 0; i < 40; i++) {
+    const T = (low + high) / 2;
+    const incH = T / 2, incW = T / 2;
+    const taxH = TaxCalculator.computeTotalTax(incH, ageH);
+    const taxW = TaxCalculator.computeTotalTax(incW, ageW);
+    const clawH = TaxCalculator.computeOasClawback(incH, oasTotal / 2);
+    const clawW = TaxCalculator.computeOasClawback(incW, oasTotal / 2);
+    const net = T - taxH - taxW - clawH - clawW;
+    if (net >= netNeed - 1) high = T;
+    else low = T;
+  }
+  return (low + high) / 2;
+}
+
 function solveTaxableWithdrawals(ageH, ageW, cppTotal, oasTotal, pensionTotal, netNeed, taxablePool) {
   let low = 0, high = taxablePool;
   let bestWithdrawals = 0, bestTaxes = 0, bestNetFromTaxable = 0;
@@ -148,7 +166,7 @@ function runEngine(params) {
     const pW = pensionW * Math.pow(1 + pensionRate, yearIndex);
     const cppTotal = cppH + cppW, oasTotal = oasH + oasW, pensionTotal = pH + pW;
 
-    // Desired income is before tax; convert to after-tax need (50/50 split, with OAS clawback)
+    // Desired Income is before tax: convert to after-tax need (50/50 split, with OAS clawback)
     const grossTotal = (incomeH + incomeW) * Math.pow(1 + inflation, yearIndex);
     const grossPerPerson = grossTotal / 2;
     const taxH = TaxCalculator.computeTotalTax(grossPerPerson, ageH);
@@ -167,18 +185,19 @@ function runEngine(params) {
     if (ageW >= 71) rrifLifMin += rrifFactor(ageW) * (rW + fW);
 
     const taxablePool = rH + rW + fH + fW;
-    let { withdrawals: taxableWithdrawals, taxes, netFromTaxable } = solveTaxableWithdrawals(
-      ageH, ageW, cppTotal, oasTotal, pensionTotal, netNeed, taxablePool);
-
+    // Total Income (gross) = max(Pension H+W + CPP + OAS, Desired gross). Taxes applied to Total Income.
+    const desiredTotalGross = desiredTotalGrossFromNetNeed(netNeed, ageH, ageW, oasTotal);
+    const incomeFromPensionCppOas = pensionTotal + cppTotal + oasTotal;
+    const totalIncomeTarget = Math.max(incomeFromPensionCppOas, desiredTotalGross);
+    let taxableWithdrawals = Math.max(0, Math.min(totalIncomeTarget - incomeFromPensionCppOas, taxablePool));
     if ((ageH >= 71 || ageW >= 71) && taxablePool > 0) {
       const minRequired = Math.min(rrifLifMin, taxablePool);
-      if (taxableWithdrawals < minRequired) {
-        taxableWithdrawals = minRequired;
-        const out = computeTaxAndNetFromWithdrawal(ageH, ageW, cppTotal, oasTotal, pensionTotal, taxableWithdrawals);
-        taxes = out.totalTax;
-        netFromTaxable = out.netFromTaxable;
-      }
+      if (taxableWithdrawals < minRequired) taxableWithdrawals = minRequired;
     }
+    const familyTaxableIncome = cppTotal + oasTotal + pensionTotal + taxableWithdrawals;
+    const taxOut = computeTaxAndNetFromWithdrawal(ageH, ageW, cppTotal, oasTotal, pensionTotal, taxableWithdrawals);
+    let taxes = taxOut.totalTax;
+    let netFromTaxable = taxOut.netFromTaxable;
 
     const netFromTaxablePlusPensions = cppTotal + oasTotal + netFromTaxable;
     const sharedNet = netFromTaxablePlusPensions - pensionTotal;
@@ -222,15 +241,16 @@ function runEngine(params) {
       }
     }
 
-    // Desired income is before tax; net need is derived from gross minus tax. Surplus net over need goes to TFSA.
-    const familyTaxableIncome = cppTotal + oasTotal + pensionTotal + taxableWithdrawals;
+    // Surplus = actual net minus desired after-tax need; split evenly to TFSA (H) and TFSA (W)
     const netTotal = familyTaxableIncome - taxes;
-    const hNet = netTotal / 2;
-    const wNet = netTotal / 2;
-    if (hNet > needH) tH += hNet - needH;
-    if (wNet > needW) tW += wNet - needW;
+    const surplus = Math.max(0, netTotal - netNeed);
+    if (surplus > 0) {
+      tH += surplus / 2;
+      tW += surplus / 2;
+    }
 
     const totalWithdrawals = taxableWithdrawals + tfsaWithdrawals + cppTotal + oasTotal + pensionTotal;
+    const totalIncome = familyTaxableIncome; // Gross taxable income (pension + CPP + OAS + RRSP/LIF)
     const g = 1 + growth;
     const bankG = 1 + bankRate;
     rH *= g; rW *= g; tH *= g; tW *= g; lH *= g; fH *= g; lW *= g; fW *= g;
@@ -242,8 +262,8 @@ function runEngine(params) {
       bankH: bH, bankW: bW,
       cppTotal, oasTotal, pensionH: pH, pensionW: pW, pensionTotal,
       rrifLifMinimum: rrifLifMin,
-      totalWithdrawals, taxes,
-      netIncome: Math.min(netNeed, netFromTaxablePlusPensions + tfsaWithdrawals),
+      totalWithdrawals, totalIncome, taxes,
+      netIncome: netNeed, // Desired after-tax amount (from Desired Income before tax)
       endingBalances: rH + rW + tH + tW + lH + lW + fH + fW + bH + bW
     });
   }

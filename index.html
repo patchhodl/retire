@@ -274,8 +274,8 @@
     </div>
     <div class="row-explanation">
       <div class="col-head">Explanation</div>
-      <p><strong>Assumption:</strong> If your Pension Income is greater than your Desired Income (before tax), any difference (after tax) will be contributed to your TFSA.</p>
-      <p><strong>Desired Income:</strong> Your before-tax target life style.  The planner converts it to an after-tax need using current Canadian tax rules.</p>
+      <p><strong>Assumption:</strong> Desired Income is before tax. The planner converts it to an after-tax need; that amount is shown as Desired Income. Any surplus (actual net minus that need) is split evenly to TFSA (H) and TFSA (W).</p>
+      <p><strong>Desired Income (before tax):</strong> Your gross target. Converted to after-tax need using current tax rules; Desired Income column shows that need. Surplus = actual net − need, split 50/50 to TFSAs.</p>
       <p><strong>Bank Rate:</strong> The rate that banks provide for savings accounts.</p>
       <p><strong>Pension Rate:</strong> The inflation-adjusted rate that pensions (ex OMERS) will increase at.</p>
       <p><strong>CPP/OAS Rate:</strong> The inflation-adjusted rate that the Canadian government will increase CPP and OAS at each year.</p>
@@ -450,7 +450,7 @@
           '<th>RRSP (H)</th><th>RRSP (W)</th><th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
           '<th>TFSA (H)</th><th>TFSA (W)</th><th>CPP</th><th>OAS</th>' +
           '<th>RRIF/LIF Min</th><th>Pension Income (H)</th><th>Pension Income (W)</th>' +
-          '<th>Withdrawals</th><th>Taxes</th><th>Net Income</th><th>End Bal</th></tr></thead><tbody>';
+          '<th>Total Income</th><th>Taxes</th><th>Desired Income</th><th>End Balance</th></tr></thead><tbody>';
         rows.forEach(r => {
           const year = startYear + r.yearIndex;
           tableHtml += `<tr>
@@ -463,7 +463,7 @@
             <td>${fmt(r.cppTotal)}</td><td>${fmt(r.oasTotal)}</td>
             <td>${fmt(r.rrifLifMinimum)}</td>
             <td>${fmt(r.pensionH)}</td><td>${fmt(r.pensionW)}</td>
-            <td>${fmt(r.totalWithdrawals)}</td><td>${fmt(r.taxes)}</td>
+            <td>${fmt(r.totalIncome)}</td><td>${fmt(r.taxes)}</td>
             <td>${fmt(r.netIncome)}</td><td>${fmt(r.endingBalances)}</td>
           </tr>`;
         });
@@ -581,10 +581,10 @@
                     'TFSA (W): ' + fmt(row.tfsaW),
                     'CPP total: ' + fmt(row.cppTotal),
                     'OAS total: ' + fmt(row.oasTotal),
-                    'Total withdrawals: ' + fmt(row.totalWithdrawals),
+                    'Total Income: ' + fmt(row.totalIncome),
                     'Taxes: ' + fmt(row.taxes),
-                    'Net income: ' + fmt(row.netIncome),
-                    'Ending balances: ' + fmt(row.endingBalances)
+                    'Desired Income: ' + fmt(row.netIncome),
+                    'End Balance: ' + fmt(row.endingBalances)
                   ];
                 }
               }
