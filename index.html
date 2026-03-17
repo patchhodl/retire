@@ -274,8 +274,8 @@
     </div>
     <div class="row-explanation">
       <div class="col-head">Explanation</div>
-      <p><strong>Assumption:</strong> Desired Income is before tax. The planner converts it to an after-tax need; that amount is shown as Desired Income. Any surplus (actual net minus that need) is split evenly to TFSA (H) and TFSA (W).</p>
-      <p><strong>Desired Income (before tax):</strong> Your gross target. Converted to after-tax need using current tax rules; Desired Income column shows that need. Surplus = actual net − need, split 50/50 to TFSAs.</p>
+      <p><strong>Assumption:</strong> Desired Income is before tax. The planner converts it to an after-tax need and that amount is shown as Net Income. Any surplus (actual net minus that need) is split evenly to TFSA (H) and TFSA (W).</p>
+      <p><strong>Desired Income (before tax):</strong> Your desired gross target. Converted to after-tax need using current tax rules.</p>
       <p><strong>Bank Rate:</strong> The rate that banks provide for savings accounts.</p>
       <p><strong>Pension Rate:</strong> The inflation-adjusted rate that pensions (ex OMERS) will increase at.</p>
       <p><strong>CPP/OAS Rate:</strong> The inflation-adjusted rate that the Canadian government will increase CPP and OAS at each year.</p>
@@ -450,7 +450,7 @@
           '<th>RRSP (H)</th><th>RRSP (W)</th><th>LIRA (H)</th><th>LIRA (W)</th><th>LIF (H)</th><th>LIF (W)</th>' +
           '<th>TFSA (H)</th><th>TFSA (W)</th><th>CPP</th><th>OAS</th>' +
           '<th>RRIF/LIF Min</th><th>Pension Income (H)</th><th>Pension Income (W)</th>' +
-          '<th>Total Income</th><th>Taxes</th><th>Desired Income</th><th>End Balance</th></tr></thead><tbody>';
+          '<th>Total Income</th><th>Taxes</th><th>Net Income</th><th>End Balance</th></tr></thead><tbody>';
         rows.forEach(r => {
           const year = startYear + r.yearIndex;
           tableHtml += `<tr>
